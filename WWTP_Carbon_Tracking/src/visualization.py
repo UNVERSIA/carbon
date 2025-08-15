@@ -77,20 +77,22 @@ def create_sankey_diagram(df: pd.DataFrame) -> go.Figure:
         return go.Figure()
     labels = [
         "电耗", "PAC", "PAM", "次氯酸钠",
-        "预处理区", "生物处理区", "深度处理区", "污泥处理区",
+        "预处理区", "生物处理区", "深度处理区", "泥处理区", "出水区", "除臭系统",
         "N2O排放", "CH4排放", "能耗间接排放", "药耗间接排放"
     ]
     energy = df['energy_CO2eq'].sum()
     pac = df['PAC_CO2eq'].sum() if 'PAC_CO2eq' in df else 0
     pam = df['PAM_CO2eq'].sum() if 'PAM_CO2eq' in df else 0
     naclo = df['NaClO_CO2eq'].sum() if 'NaClO_CO2eq' in df else 0
-    source = [0, 0, 0, 0, 1, 2, 3]
-    target = [4, 5, 6, 7, 6, 6, 6]
+    source = [0, 0, 0, 0, 0, 0, 1, 2, 3]  # 增加除臭系统源
+    target = [4, 5, 6, 7, 8, 9, 6, 6, 6]  # 增加除臭系统目标
     value = [
-        energy * 0.2,
-        energy * 0.5,
-        energy * 0.2,
-        energy * 0.1,
+        energy * 0.3193,
+        energy * 0.4453,
+        energy * 0.1155,
+        energy * 0.0507,
+        energy * 0.0672,
+        energy * 0.0267,  # 除臭系统能耗
         pac,
         pam,
         naclo
@@ -100,11 +102,11 @@ def create_sankey_diagram(df: pd.DataFrame) -> go.Figure:
     ch4_emission = df['CH4_CO2eq'].sum()
     if n2o_emission > 0:
         source.append(5)  # 生物处理区
-        target.append(8)  # N2O排放
+        target.append(10)  # N2O排放
         value.append(n2o_emission)
     if ch4_emission > 0:
         source.append(5)  # 生物处理区
-        target.append(9)  # CH4排放
+        target.append(11)  # CH4排放
         value.append(ch4_emission)
     # 过滤零值
     valid_indices = [i for i, v in enumerate(value) if v > 0]
@@ -115,7 +117,7 @@ def create_sankey_diagram(df: pd.DataFrame) -> go.Figure:
     # 定义节点颜色
     node_colors = [
         "#FFD700", "#FFA500", "#FF6347", "#FF4500",  # 输入源（金色、橙色）
-        "#1E90FF", "#4169E1", "#4682B4", "#5F9EA0",  # 处理区（蓝色系）
+        "#1E90FF", "#4169E1", "#4682B4", "#5F9EA0", "#1abc9c", "#1abc9c",  # 处理区（蓝色系，除臭系统用出水区颜色）
         "#32CD32", "#228B22", "#2E8B57", "#3CB371"  # 排放（绿色系）
     ]
     # 修正：移除node配置中的font属性，使用hoverlabel设置文字样式
@@ -159,8 +161,8 @@ def create_efficiency_ranking(df: pd.DataFrame) -> go.Figure:
     if df.empty:
         return go.Figure()
     efficiency_data = {}
-    units = ["预处理区", "生物处理区", "深度处理区", "污泥处理区"]
-    unit_cols = ['pre_CO2eq', 'bio_CO2eq', 'depth_CO2eq', 'sludge_CO2eq']
+    units = ["预处理区", "生物处理区", "深度处理区", "泥处理区", "出水区", "除臭系统"]  # 包含除臭系统
+    unit_cols = ['pre_CO2eq', 'bio_CO2eq', 'depth_CO2eq', 'sludge_CO2eq', 'effluent_CO2eq', 'deodorization_CO2eq']
     total_water = df['处理水量(m³)'].sum()
     if total_water > 0:
         for unit, col in zip(units, unit_cols):
