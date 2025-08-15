@@ -17,12 +17,14 @@ class CarbonCalculator:
             "次氯酸钠": 0.92
         }
 
-        # 各工艺单元能耗分配比例（根据方案表1）
+        # 各工艺单元能耗分配比例（根据方案表2）
         self.energy_distribution = {
-            "预处理区": 0.2,
-            "生物处理区": 0.5,
-            "深度处理区": 0.2,
-            "污泥处理区": 0.1
+            "预处理区": 0.3193,
+            "生物处理区": 0.4453,
+            "深度处理区": 0.1155,
+            "泥处理区": 0.0507,
+            "出水区": 0.0672,
+            "除臭系统": 0.0267  # 新增除臭系统能耗占比
         }
 
     def calculate_direct_emissions(self, df):
@@ -81,7 +83,7 @@ class CarbonCalculator:
         return df
 
     def calculate_unit_emissions(self, df):
-        """按工艺单元拆分排放量"""
+        """按工艺单元拆分排放量（包含除臭系统）"""
         # 检查输入数据合法性
         required_cols = ['energy_CO2eq', 'N2O_CO2eq', 'CH4_CO2eq', 'chemicals_CO2eq', '处理水量(m³)']
         missing_cols = [col for col in required_cols if col not in df.columns]
@@ -96,13 +98,17 @@ class CarbonCalculator:
 
         # 按工艺单元分配碳排放
         df['pre_CO2eq'] = df['energy_CO2eq'] * self.energy_distribution["预处理区"]
-        df['bio_CO2eq'] = df['N2O_CO2eq'] + df['CH4_CO2eq'] + df['energy_CO2eq'] * self.energy_distribution[
-            "生物处理区"]
+        df['bio_CO2eq'] = df['N2O_CO2eq'] + df['CH4_CO2eq'] + df['energy_CO2eq'] * self.energy_distribution["生物处理区"]
         df['depth_CO2eq'] = df['chemicals_CO2eq'] + df['energy_CO2eq'] * self.energy_distribution["深度处理区"]
-        df['sludge_CO2eq'] = df['energy_CO2eq'] * self.energy_distribution["污泥处理区"]
+        df['sludge_CO2eq'] = df['energy_CO2eq'] * self.energy_distribution["泥处理区"]
+        df['effluent_CO2eq'] = df['energy_CO2eq'] * self.energy_distribution["出水区"]
+        # 新增除臭系统碳排放
+        df['deodorization_CO2eq'] = df['energy_CO2eq'] * self.energy_distribution["除臭系统"]
 
         # 总排放与效率
-        df['total_CO2eq'] = df['pre_CO2eq'] + df['bio_CO2eq'] + df['depth_CO2eq'] + df['sludge_CO2eq']
+        df['total_CO2eq'] = (df['pre_CO2eq'] + df['bio_CO2eq'] +
+                             df['depth_CO2eq'] + df['sludge_CO2eq'] +
+                             df['effluent_CO2eq'] + df['deodorization_CO2eq'])
         df['carbon_efficiency'] = df['处理水量(m³)'] / df['total_CO2eq'].replace(0, 1)  # 避免除零错误
 
         return df
