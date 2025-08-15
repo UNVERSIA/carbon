@@ -46,7 +46,10 @@ if 'unit_data' not in st.session_state:
         "污泥处理车间": {"water_flow": 500.0, "energy": 2000.0, "PAM": 100.0, "emission": 800.0, "enabled": True},
         "DF系统": {"water_flow": 10000.0, "energy": 2500.0, "PAC": 300.0, "emission": 1000.0, "enabled": True},
         "催化氧化": {"water_flow": 10000.0, "energy": 1800.0, "emission": 700.0, "enabled": True},
-        "鼓风机房": {"water_flow": 0.0, "energy": 2500.0, "emission": 900.0, "enabled": True}
+        "鼓风机房": {"water_flow": 0.0, "energy": 2500.0, "emission": 900.0, "enabled": True},
+        "消毒接触池": {"water_flow": 10000.0, "energy": 1000.0, "emission": 400.0, "enabled": True},
+        # 新增除臭系统
+        "除臭系统": {"water_flow": 0.0, "energy": 1800.0, "emission": 600.0, "enabled": True}
     }
 if 'custom_calculations' not in st.session_state:
     st.session_state.custom_calculations = {}
@@ -257,6 +260,7 @@ def create_plant_diagram(selected_unit=None, flow_position=0, flow_rate=10000, a
             .advanced-treatment {{ background-color: #e74c3c; }}
             .sludge-treatment {{ background-color: #f39c12; }}
             .auxiliary {{ background-color: #9b59b6; }}
+            .effluent-area {{ background-color: #1abc9c; }}
 
             .flow-line {{
                 position: absolute;
@@ -367,6 +371,49 @@ def create_plant_diagram(selected_unit=None, flow_position=0, flow_rate=10000, a
                 z-index: 10;
             }}
 
+            /* 区域标注样式 */
+            .region-box {{
+                position: absolute;
+                border: 3px solid;
+                border-radius: 10px;
+                z-index: 3;
+                opacity: 0.3;
+            }}
+
+            .region-label {{
+                position: absolute;
+                font-weight: bold;
+                font-size: 16px;
+                color: black;
+                text-shadow: 1px 1px 2px white;
+                z-index: 4;
+            }}
+
+            .region-pre-treatment {{
+                background-color: rgba(52, 152, 219, 0.3);
+                border-color: #3498db;
+            }}
+
+            .region-bio-treatment {{
+                background-color: rgba(46, 204, 113, 0.3);
+                border-color: #2ecc71;
+            }}
+
+            .region-advanced-treatment {{
+                background-color: rgba(231, 76, 60, 0.3);
+                border-color: #e74c3c;
+            }}
+
+            .region-sludge-treatment {{
+                background-color: rgba(243, 156, 18, 0.3);
+                border-color: #f39c12;
+            }}
+
+            .region-effluent-area {{
+                background-color: rgba(26, 188, 156, 0.3);
+                border-color: #1abc9c;
+            }}
+
             @keyframes flow {{
                 0% {{ background-position: -100% 0; }}
                 100% {{ background-position: 200% 0; }}
@@ -380,6 +427,31 @@ def create_plant_diagram(selected_unit=None, flow_position=0, flow_rate=10000, a
     </head>
     <body>
         <div class="plant-container">
+            <!-- 区域标注框 -->
+            <!-- 预处理区 -->
+            <div class="region-box region-pre-treatment" style="top: 126px; left: 110px; width: 783px; height: 142px;"></div>
+            <div class="region-label" style="top: 133px; left: 120px;">预处理区</div>
+
+            <!-- 生物处理区 -->
+            <div class="region-box region-bio-treatment" style="top: 400px; left: 490px; width: 415px; height: 140px;"></div>
+            <div class="region-label" style="top: 405px; left: 500px;">生物处理区</div>
+
+            <!-- 深度处理区 -->
+            <div class="region-box region-advanced-treatment" style="top: 620px; left: 500px; width: 370px; height: 140px;"></div>
+            <div class="region-label" style="top: 735px; left: 520px;">深度处理区</div>
+
+            <!-- 泥处理区 -->
+            <div class="region-box region-sludge-treatment" style="top: 400px; left: 270px; width: 170px; height: 200px;"></div>
+            <div class="region-label" style="top: 405px; left: 280px;">泥处理区</div>
+
+            <!-- 出水区 -->
+            <div class="region-box region-effluent-area" style="top: 640px; left: 180px; width: 250px; height: 100px;"></div>
+            <div class="region-label" style="top: 650px; left: 190px;">出水区</div>
+
+            <!-- 新增除臭系统区域标注框 -->
+            <div class="region-box region-effluent-area" style="top: 282px; left: 26px; width: 135px; height: 160px;"></div>
+            <div class="region-label" style="top: 286px; left: 35px;">出水区</div>
+
             <!-- 工艺单元 -->
             <!-- 第一行：预处理区 -->
             <div class="unit pre-treatment" style="top: 160px; left: 150px; width: 90px; height: 60px;" onclick="selectUnit('粗格栅')">
@@ -439,9 +511,10 @@ def create_plant_diagram(selected_unit=None, flow_position=0, flow_rate=10000, a
                 <div class="unit-status">运行中</div>
             </div>
 
-            <!-- 中行最左侧：生物除臭（无框） -->
-            <div class="bio-deodorization" style="top: 330px; left: 35px; width: 120px; height: 20px;">
-                <div>生物除臭</div>
+            <!-- 除臭系统单元 -->
+            <div class="unit effluent-area" style="top: 310px; left: 50px; width: 70px; height: 40px;" onclick="selectUnit('除臭系统')">
+                <div class="unit-name">除臭系统</div>
+                <div class="unit-status">运行中</div>
             </div>
 
             <!-- 第三行：深度处理区 -->
@@ -452,6 +525,12 @@ def create_plant_diagram(selected_unit=None, flow_position=0, flow_rate=10000, a
 
             <div class="unit advanced-treatment" style="top: 650px; left: 740px; width: 90px; height: 60px;" onclick="selectUnit('催化氧化')">
                 <div class="unit-name">催化氧化</div>
+                <div class="unit-status">运行中</div>
+            </div>
+
+            <!-- 出水区单元 -->
+            <div class="unit effluent-area" style="top: 660px; left: 325px; width: 76px; height: 40px;" onclick="selectUnit('消毒接触池')">
+                <div class="unit-name">消毒接触池</div>
                 <div class="unit-status">运行中</div>
             </div>
 
@@ -482,13 +561,14 @@ def create_plant_diagram(selected_unit=None, flow_position=0, flow_rate=10000, a
             <div class="water-flow" style="top: 197px; left: 896px; width: 8px; height: 250px;"></div>
             <div class="water-flow" style="top: 443px; left: 874px; width: 30px; height: 7px;"></div>
             <div class="water-flow" style="top: 685px; left: 850px; width: 50px; height: 7px;"></div>
-            
+
             <div class="water-flow" style="top: 500px; left: 896px; width: 8px; height: 190px;"></div>
             <div class="water-flow" style="top: 500px; left: 880px; width: 20px; height: 7px;"></div>
-            
+
             <div class="water-flow" style="top: 685px; left: 626px; width: 125px; height: 7px;"></div>
             <div class="water-flow" style="top: 685px; left: 305px; width: 220px; height: 7px;"></div>
-            
+            <div class="water-flow" style="top: 685px; left: 205px; width: 220px; height: 7px;"></div>
+
             <div class="water-flow" style="top: 510px; left: 575px; width: 8px; height: 200px;"></div>
 
             <!-- 污泥流动画 -->
@@ -500,7 +580,7 @@ def create_plant_diagram(selected_unit=None, flow_position=0, flow_rate=10000, a
             <div class="flow-arrow" style="top: 123px; left: 505px; width: 0; height: 0; border-style: solid; border-width: 0 6px 6px 6px; border-color: transparent transparent #8B4513 transparent;"></div>
             <div class="flow-arrow" style="top: 123px; left: 655px; width: 0; height: 0; border-style: solid; border-width: 0 6px 6px 6px; border-color: transparent transparent #8B4513 transparent;"></div>
             <div class="flow-arrow" style="top: 123px; left: 804px; width: 0; height: 0; border-style: solid; border-width: 0 6px 6px 6px; border-color: transparent transparent #8B4513 transparent;"></div>
-            
+
 
             <!-- 臭气流动画 -->
             <div class="gas-flow" style="top: 243px; left: 202px; width: 6px; height: 100px;"></div>
@@ -511,7 +591,6 @@ def create_plant_diagram(selected_unit=None, flow_position=0, flow_rate=10000, a
             <div class="gas-flow" style="top: 340px; left: 570px; width: 6px; height: 100px;"></div>
             <div class="gas-flow" style="top: 340px; left: 35px; width: 800px; height: 4px;"></div>
             <div class="gas-flow" style="top: 340px; left: 660px; width: 150px; height: 3px;"></div>
-            <div class="gas-flow" style="top: 352px; left: 90px; width: 6px; height: 61px;"></div>
             <div class="gas-flow" style="top: 352px; left: 90px; width: 6px; height: 61px;"></div>
 
             <!-- 鼓风机到MBR膜池的气流动画 -->
@@ -524,20 +603,21 @@ def create_plant_diagram(selected_unit=None, flow_position=0, flow_rate=10000, a
             <div class="flow-arrow" style="top: 193px; left: 593px; border-width: 8px 0 8px 8px; border-color: transparent transparent transparent #1e90ff;"></div>
             <div class="flow-arrow" style="top: 193px; left: 741px; border-width: 8px 0 8px 8px; border-color: transparent transparent transparent #1e90ff;"></div>
             <div class="flow-arrow" style="top: 642px; left: 572px; border-width: 8px 8px 0 8px; border-color: #1e90ff transparent transparent transparent;"></div>
-            
+
             <div class="flow-arrow" style="top: 464px; left: 633px; border-width: 8px 8px 8px 0; border-color: transparent #1e90ff transparent transparent;"></div>
             <div class="flow-arrow" style="top: 439px; left: 882px; border-width: 8px 8px 8px 0; border-color: transparent #1e90ff transparent transparent;"></div>
             <div class="flow-arrow" style="top: 496px; left: 882px; border-width: 8px 8px 8px 0; border-color: transparent #1e90ff transparent transparent;"></div>
-            <div class="flow-arrow" style="top: 682px; left: 307px; border-width: 8px 8px 8px 0; border-color: transparent #1e90ff transparent transparent;"></div>
-            
+            <div class="flow-arrow" style="top: 682px; left: 423px; border-width: 8px 8px 8px 0; border-color: transparent #1e90ff transparent transparent;"></div>
+            <div class="flow-arrow" style="top: 682px; left: 222px; border-width: 8px 8px 8px 0; border-color: transparent #1e90ff transparent transparent;"></div>
+
             <div class="flow-arrow" style="top: 682px; left: 732px; border-width: 8px 8px 8px 0; border-color: transparent #1e90ff transparent transparent; transform: rotate(180deg);"></div>
-            
+
 
             <!-- 臭气箭头 -->
             <div class="flow-arrow" style="top: 410px; left: 85px; border-width: 8px 8px 0 8px; border-color: #A9A9A9 transparent transparent transparent;"></div>
-            <div class="flow-arrow" style="top: 334px; left: 127px; border-width: 8px 8px 8px 0; border-color: transparent #A9A9A9 transparent transparent;"></div>
+            <div class="flow-arrow" style="top: 334px; left: 144px; border-width: 8px 8px 8px 0; border-color: transparent #A9A9A9 transparent transparent;"></div>
             <div class="flow-arrow" style="top: 464px; left: 883px; border-width: 8px 8px 8px 0; border-color: transparent #A9A9A9 transparent transparent;"></div>
-            
+
 
             <!-- 鼓风机到MBR膜池的箭头（白灰色透明） -->
             <div class="flow-arrow" style="top: 450px; left: 775px; border-width: 5px 0 5px 8px; border-color: transparent transparent transparent rgba(255, 255, 255, 0.8);"></div>
@@ -555,7 +635,6 @@ def create_plant_diagram(selected_unit=None, flow_position=0, flow_rate=10000, a
             <div class="flow-label" style="top: 370px; left: 325px;">臭气G7</div>
             <div class="flow-label" style="top: 415px; left: 46px;background:none;">处理后的臭气排放</div>
             <div class="flow-label" style="top: 645px; left: 672px;">浓水</div>
-            <div class="flow-label" style="top: 710px; left: 390px;">次氯酸钠</div>
             <div class="flow-label" style="top: 710px; left: 672px;">臭氧</div>
 
             <!-- 排出物标签 -->
@@ -564,7 +643,7 @@ def create_plant_diagram(selected_unit=None, flow_position=0, flow_rate=10000, a
             <div class="flow-label" style="top: 100px; left: 635px; background: #FF6347;">沉渣S3</div>
             <div class="flow-label" style="top: 100px; left: 785px; background: #FF6347;">栅渣S4</div>
             <div class="flow-label" style="top: 580px; left: 340px; background: none;">外运</div>
-            <div class="flow-label" style="top: 675px; left: 250px; background: none;">排河</div>
+            <div class="flow-label" style="top: 675px; left: 190px; background: none;">排河</div>
             <div class="special-flow-label" style="top: 520px; left: 750px;">MBR生物池</div>
 
             <!-- 动态粒子 -->
@@ -670,7 +749,7 @@ with tab1:
         if st.session_state.get('last_clicked_unit'):
             selected_unit = st.session_state.last_clicked_unit
         else:
-            # 下拉框选项中移除生物除臭
+            # 下拉框选项中包含除臭系统
             selected_unit = st.selectbox(
                 "选择工艺单元",
                 list(st.session_state.unit_data.keys()),
@@ -768,8 +847,10 @@ with tab1:
             st.info("DF系统进行深度过滤，需要投加PAC等化学药剂")
         elif selected_unit == "污泥处理车间":
             st.info("污泥处理车间进行污泥浓缩和脱水，需要投加PAM等絮凝剂")
-        elif selected_unit == "生物除臭":
-            st.info("生物除臭系统处理全厂产生的臭气，减少恶臭排放")
+        elif selected_unit == "除臭系统":
+            st.info("除臭系统处理全厂产生的臭气，减少恶臭排放")
+        elif selected_unit == "消毒接触池":
+            st.info("消毒接触池对处理后的水进行消毒，确保水质安全")
 
 # 其余选项卡保持不变
 with tab2:
@@ -783,12 +864,14 @@ with tab2:
             df_calc = calculator.calculate_indirect_emissions(df_calc)
             df_calc = calculator.calculate_unit_emissions(df_calc)
             st.session_state.df_calc = df_calc
-            # 计算单元排放数据
+            # 计算单元排放数据（包含除臭系统）
             st.session_state.emission_data = {
                 "预处理区": df_calc['pre_CO2eq'].sum(),
                 "生物处理区": df_calc['bio_CO2eq'].sum(),
                 "深度处理区": df_calc['depth_CO2eq'].sum(),
-                "污泥处理区": df_calc['sludge_CO2eq'].sum()
+                "泥处理区": df_calc['sludge_CO2eq'].sum(),
+                "出水区": df_calc['effluent_CO2eq'].sum(),
+                "除臭系统": df_calc['deodorization_CO2eq'].sum()  # 新增除臭系统
             }
         except Exception as e:
             st.error(f"碳核算计算错误: {str(e)}")
@@ -819,27 +902,34 @@ with tab3:
     st.header("碳账户管理")
     if 'df_calc' in st.session_state and st.session_state.df_calc is not None:
         df_calc = st.session_state.df_calc
-        # 碳账户明细
+        # 碳账户明细（包含除臭系统）
         st.subheader("碳账户收支明细（当月）")
         account_df = pd.DataFrame({
-            "工艺单元": ["预处理区", "生物处理区", "深度处理区", "污泥处理区"],
+            "工艺单元": ["预处理区", "生物处理区", "深度处理区", "泥处理区", "出水区", "除臭系统"],
             "碳流入(kgCO2eq)": [
-                df_calc['energy_CO2eq'].sum() * 0.2,
-                df_calc['energy_CO2eq'].sum() * 0.5,
-                df_calc['energy_CO2eq'].sum() * 0.2 + df_calc['chemicals_CO2eq'].sum(),
-                df_calc['energy_CO2eq'].sum() * 0.1
+                df_calc['energy_CO2eq'].sum() * 0.3193,
+                df_calc['energy_CO2eq'].sum() * 0.4453,
+                df_calc['energy_CO2eq'].sum() * 0.1155 + df_calc['chemicals_CO2eq'].sum(),
+                df_calc['energy_CO2eq'].sum() * 0.0507,
+                df_calc['energy_CO2eq'].sum() * 0.0672,
+                df_calc['energy_CO2eq'].sum() * 0.0267  # 除臭系统能耗占比
             ],
             "碳流出(kgCO2eq)": [
                 df_calc['pre_CO2eq'].sum(),
                 df_calc['bio_CO2eq'].sum(),
                 df_calc['depth_CO2eq'].sum(),
-                df_calc['sludge_CO2eq'].sum()
+                df_calc['sludge_CO2eq'].sum(),
+                df_calc['effluent_CO2eq'].sum(),
+                df_calc['deodorization_CO2eq'].sum()  # 除臭系统排放
             ],
             "净排放(kgCO2eq)": [
-                df_calc['pre_CO2eq'].sum() - df_calc['energy_CO2eq'].sum() * 0.2,
-                df_calc['bio_CO2eq'].sum() - df_calc['energy_CO2eq'].sum() * 0.5,
-                df_calc['depth_CO2eq'].sum() - (df_calc['energy_CO2eq'].sum() * 0.2 + df_calc['chemicals_CO2eq'].sum()),
-                df_calc['sludge_CO2eq'].sum() - df_calc['energy_CO2eq'].sum() * 0.1
+                df_calc['pre_CO2eq'].sum() - df_calc['energy_CO2eq'].sum() * 0.3193,
+                df_calc['bio_CO2eq'].sum() - df_calc['energy_CO2eq'].sum() * 0.4453,
+                df_calc['depth_CO2eq'].sum() - (
+                            df_calc['energy_CO2eq'].sum() * 0.1155 + df_calc['chemicals_CO2eq'].sum()),
+                df_calc['sludge_CO2eq'].sum() - df_calc['energy_CO2eq'].sum() * 0.0507,
+                df_calc['effluent_CO2eq'].sum() - df_calc['energy_CO2eq'].sum() * 0.0672,
+                df_calc['deodorization_CO2eq'].sum() - df_calc['energy_CO2eq'].sum() * 0.0267  # 除臭系统净排放
             ]
         })
 
@@ -972,12 +1062,14 @@ with tab4:
                 current_total = 0
             if historical_mean > 0 and current_total > 1.5 * historical_mean:
                 st.warning(f"⚠️ 异常预警：当月单位水量碳排放（{current_total:.4f} kgCO2eq/m³）超历史均值50%！")
-                # 识别主要问题区域
+                # 识别主要问题区域（包含除臭系统）
                 unit_emissions = {
                     "预处理区": df_calc['pre_CO2eq'].sum() / current_water,
                     "生物处理区": df_calc['bio_CO2eq'].sum() / current_water,
                     "深度处理区": df_calc['depth_CO2eq'].sum() / current_water,
-                    "污泥处理区": df_calc['sludge_CO2eq'].sum() / current_water
+                    "泥处理区": df_calc['sludge_CO2eq'].sum() / current_water,
+                    "出水区": df_calc['effluent_CO2eq'].sum() / current_water,
+                    "除臭系统": df_calc['deodorization_CO2eq'].sum() / current_water
                 }
                 max_unit = max(unit_emissions, key=unit_emissions.get)
                 st.error(f"主要问题区域: {max_unit} (排放强度: {unit_emissions[max_unit]:.4f} kgCO2eq/m³)")
@@ -997,6 +1089,11 @@ with tab4:
                     st.write("- 优化格栅运行频率，降低能耗")
                     st.write("- 检查水泵效率，考虑变频控制")
                     st.write("- 加强进水监控，避免大颗粒物进入")
+                elif max_unit == "出水区" or max_unit == "除臭系统":  # 除臭系统与出水区建议类似
+                    st.info("优化建议：")
+                    st.write("- 优化消毒剂投加量，减少化学药剂使用")
+                    st.write("- 检查消毒接触时间，提高消毒效率")
+                    st.write("- 考虑紫外线消毒等低碳替代方案")
                 else:
                     st.info("优化建议：")
                     st.write("- 优化污泥脱水工艺参数")
